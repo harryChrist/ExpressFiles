@@ -7,10 +7,15 @@ const app = express();
 
 // Função para criar recursivamente diretórios
 const criarDiretoriosRecursivamente = (diretorio) => {
-  if (!diretorio) return; // Adiciona verificação para diretório vazio
+  if (!diretorio) {
+    console.error('Diretório inválido:', diretorio);
+    return; // Verificação adicional para diretório vazio
+  }
   const partes = diretorio.split('/');
+  console.log('Partes do diretório:', partes); // Log das partes do diretório
   for (let i = 1; i <= partes.length; i++) {
     const caminho = partes.slice(0, i).join('/');
+    console.log('Criando caminho:', caminho); // Log do caminho sendo criado
     if (!fs.existsSync(caminho)) {
       fs.mkdirSync(caminho);
     }
@@ -57,15 +62,24 @@ app.post('/upload', upload.single('imagem'), (req, res) => {
     return res.status(400).json({ error: 'O campo "folders" é obrigatório.' });
   }
 
+  console.log('Folders:', folders);
+  console.log('Name:', name);
+  console.log('File:', req.file.originalname);
+
   const tempFilePath = path.join(__dirname, 'public/temp', req.file.originalname);
   const finalDir = path.join(__dirname, 'public', folders);
   const finalFilePath = path.join(finalDir, `${name}${path.extname(req.file.originalname)}`);
   
-  console.log('Folders:', folders);
-  console.log('Name:', name);
-  console.log('File:', req.file.originalname);
-  console.log('Dir File:', finalDir);
-  console.log('Final File:', finalFilePath);
+  console.log('Temp File Path:', tempFilePath);
+  console.log('Final Dir:', finalDir);
+  console.log('Final File Path:', finalFilePath);
+
+  // Verificação adicional para garantir que o diretório final não esteja vazio
+  if (!finalDir) {
+    console.error('Diretório final inválido:', finalDir);
+    return res.status(400).json({ error: 'Diretório final inválido.' });
+  }
+
 
   // Cria recursivamente o diretório final se não existir
   criarDiretoriosRecursivamente(finalDir);
