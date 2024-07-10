@@ -7,6 +7,7 @@ const app = express();
 
 // Função para criar recursivamente diretórios
 const criarDiretoriosRecursivamente = (diretorio) => {
+  if (!diretorio) return; // Adiciona verificação para diretório vazio
   const partes = diretorio.split('/');
   for (let i = 1; i <= partes.length; i++) {
     const caminho = partes.slice(0, i).join('/');
@@ -45,7 +46,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rota para página inicial
-// Rota para página inicial
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -53,6 +53,10 @@ app.get('/', (req, res) => {
 // Rota para lidar com o envio de imagens e texto
 app.post('/upload', upload.single('imagem'), (req, res) => {
   const { name, folders } = req.body;
+  if (!folders) {
+    return res.status(400).json({ error: 'O campo "folders" é obrigatório.' });
+  }
+
   const tempFilePath = path.join(__dirname, 'public/temp', req.file.originalname);
   const finalDir = path.join(__dirname, 'public', folders);
   const finalFilePath = path.join(finalDir, `${name}${path.extname(req.file.originalname)}`);
@@ -68,8 +72,7 @@ app.post('/upload', upload.single('imagem'), (req, res) => {
     res.json({
       message: 'Upload realizado com sucesso!',
       file: finalFilePath,
-      body: req.body,
-      filee: req.file
+      body: req.body
     });
   });
 });
