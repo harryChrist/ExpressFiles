@@ -4,6 +4,16 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
+const BASE_DIR = path.resolve(__dirname);
+
+// Função para resolver caminhos relativos ao diretório base do projeto
+const resolvePath = (relativePath) => {
+  const resolvedPath = path.resolve(BASE_DIR, relativePath);
+  if (!resolvedPath.startsWith(BASE_DIR)) {
+    throw new Error('Tentativa de acesso fora do diretório base');
+  }
+  return resolvedPath;
+};
 
 // Função para criar recursivamente diretórios
 const criarDiretoriosRecursivamente = (diretorio) => {
@@ -11,75 +21,73 @@ const criarDiretoriosRecursivamente = (diretorio) => {
     console.error('Diretório inválido:', diretorio);
     return; // Verificação adicional para diretório vazio
   }
-  const partes = diretorio.split('/');
+  
+  const partes = diretorio.split(path.sep);
+  let caminhoAcumulado = path.isAbsolute(diretorio) ? path.sep : '';
+
   console.log('Partes do diretório:', partes); // Log das partes do diretório
-  for (let i = 1; i <= partes.length; i++) {
-    const caminho = partes.slice(0, i).join('/');
-    console.log('Criando caminho:', caminho); // Log do caminho sendo criado
-    if (!fs.existsSync(caminho)) {
-      fs.mkdirSync(caminho);
+  for (let i = 0; i < partes.length; i++) {
+    caminhoAcumulado = path.join(caminhoAcumulado, partes[i]);
+    caminhoAcumulado = resolvePath(caminhoAcumulado); // Resolve para o caminho base do projeto
+    console.log('Criando caminho:', caminhoAcumulado); // Log do caminho sendo criado
+    if (!fs.existsSync(caminhoAcumulado)) {
+      fs.mkdirSync(caminhoAcumulado);
     }
   }
 };
 
-// Configuração do Multer para armazenar imagens
+// Configuração do Multer para armazenar imagens temporariamente
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Pasta base para armazenamento de imagens
-    let pastaBase = 'public/temp';
+    const pastaTemp = resolvePath('public/temp');
 
-    // Cria recursivamente o diretório se não existir
-    if (!fs.existsSync(pastaBase)) {
-      fs.mkdirSync(pastaBase, { recursive: true });
-    }
+    // Cria recursivamente o diretório temporário se não existir
+    criarDiretoriosRecursivamente(pastaTemp);
 
-    cb(null, pastaBase);
+    cb(null, pastaTemp);
   },
   filename: function (req, file, cb) {
-    // Define o nome do arquivo como o nome fornecido no campo 'nome' ou o nome original do arquivo
-    const nome = req.body.name || file.originalname;
+    const nome = file.originalname;
     cb(null, nome);
   }
 });
 
-
 const upload = multer({ storage: storage });
 
 // Configuração do Express para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(resolvePath('public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rota para página inicial
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(resolvePath('index.html'));
 });
 
 // Rota para lidar com o envio de imagens e texto
 app.post('/upload', upload.single('imagem'), (req, res) => {
   const { name, folders } = req.body;
-  if (!folders) {
-    return res.status(400).json({ error: 'O campo "folders" é obrigatório.' });
+  if (!name || !folders) {
+    return res.status(400).json({ error: 'Os campos "name" e "folders" são obrigatórios.' });
   }
 
   console.log('Folders:', folders);
   console.log('Name:', name);
   console.log('File:', req.file.originalname);
 
-  const tempFilePath = path.join(__dirname, 'public/temp', req.file.originalname);
-  const finalDir = path.join(__dirname, 'public', folders);
-  const finalFilePath = path.join(finalDir, `${name}${path.extname(req.file.originalname)}`);
-  
+  const tempFilePath = resolvePath(path.join('public/temp', req.file.originalname));
+  const finalDir = resolvePath(path.join('public', folders));
+  const finalFilePath = resolvePath(path.join(finalDir, `${name}${path.extname(req.file.originalname)}`));
+
   console.log('Temp File Path:', tempFilePath);
   console.log('Final Dir:', finalDir);
   console.log('Final File Path:', finalFilePath);
 
-  // Verificação adicional para garantir que o diretório final não esteja vazio
+  // Verificação adicional para garantir que o diretório final esteja dentro do diretório base
   if (!finalDir) {
     console.error('Diretório final inválido:', finalDir);
     return res.status(400).json({ error: 'Diretório final inválido.' });
   }
-
 
   // Cria recursivamente o diretório final se não existir
   criarDiretoriosRecursivamente(finalDir);
@@ -87,6 +95,7 @@ app.post('/upload', upload.single('imagem'), (req, res) => {
   // Move o arquivo do diretório temporário para o diretório final
   fs.rename(tempFilePath, finalFilePath, (err) => {
     if (err) {
+      console.error('Erro ao mover o arquivo:', err);
       return res.status(500).json({ error: 'Erro ao mover o arquivo.' });
     }
     res.json({
@@ -97,13 +106,14 @@ app.post('/upload', upload.single('imagem'), (req, res) => {
   });
 });
 
+// Rota para acessar imagens sem extensão na URL
 app.get('/image/:name', (req, res) => {
   const name = req.params.name;
-  const directoryPath = path.join(__dirname, 'public/image');
+  const directoryPath = resolvePath('public/image');
   const possibleExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']; // Adicione mais extensões conforme necessário
 
   for (const ext of possibleExtensions) {
-    const filePath = path.join(directoryPath, `${name}${ext}`);
+    const filePath = resolvePath(path.join(directoryPath, `${name}${ext}`));
     if (fs.existsSync(filePath)) {
       return res.sendFile(filePath);
     }
