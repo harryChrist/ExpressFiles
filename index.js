@@ -11,6 +11,7 @@ const criarDiretoriosRecursivamente = (diretorio) => {
   const partes = diretorio.split('/');
   for (let i = 1; i <= partes.length; i++) {
     const caminho = partes.slice(0, i).join('/');
+    console.log(caminho)
     if (!fs.existsSync(caminho)) {
       fs.mkdirSync(caminho);
     }
