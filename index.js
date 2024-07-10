@@ -21,14 +21,17 @@ const criarDiretoriosRecursivamente = (diretorio) => {
     console.error('Diretório inválido:', diretorio);
     return; // Verificação adicional para diretório vazio
   }
-  
+
   const partes = diretorio.split(path.sep);
-  let caminhoAcumulado = path.isAbsolute(diretorio) ? path.sep : '';
+  let caminhoAcumulado = path.isAbsolute(diretorio) ? '' : BASE_DIR;
 
   console.log('Partes do diretório:', partes); // Log das partes do diretório
   for (let i = 0; i < partes.length; i++) {
     caminhoAcumulado = path.join(caminhoAcumulado, partes[i]);
-    caminhoAcumulado = resolvePath(caminhoAcumulado); // Resolve para o caminho base do projeto
+    if (!caminhoAcumulado.startsWith(BASE_DIR)) {
+      console.error('Tentativa de acessar fora do diretório base:', caminhoAcumulado);
+      return;
+    }
     console.log('Criando caminho:', caminhoAcumulado); // Log do caminho sendo criado
     if (!fs.existsSync(caminhoAcumulado)) {
       fs.mkdirSync(caminhoAcumulado);
