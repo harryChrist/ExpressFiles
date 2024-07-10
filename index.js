@@ -82,12 +82,15 @@ const moverArquivo = (tempFilePath, finalDir, name, res) => {
 const obterDiretorioDestino = (tipo, id) => {
   switch (tipo) {
     case 'user':
+      if (!id) throw new Error('O campo "id" é obrigatório para o tipo "user".');
       return `public/user/${id}`;
     case 'assets':
       return 'public/assets';
     case 'novel':
+      if (!id) throw new Error('O campo "id" é obrigatório para o tipo "novel".');
       return `public/novel/${id}`;
     case 'novel-assets':
+      if (!id) throw new Error('O campo "id" é obrigatório para o tipo "novel-assets".');
       return `public/novel/${id}/assets`;
     default:
       throw new Error('Tipo de upload inválido.');
@@ -124,6 +127,49 @@ app.post('/upload', upload.single('imagem'), (req, res) => {
   const tempFilePath = path.join(__dirname, 'public/temp', req.file.originalname);
 
   moverArquivo(tempFilePath, finalDir, name, res);
+});
+
+// Função para listar arquivos em um diretório
+const listarArquivos = (directory) => {
+  if (!fs.existsSync(directory)) {
+    return [];
+  }
+
+  return fs.readdirSync(directory).map(file => {
+    const filePath = path.join(directory, file);
+    const stats = fs.statSync(filePath);
+    return {
+      name: file,
+      size: stats.size,
+      created: stats.birthtime,
+      modified: stats.mtime
+    };
+  });
+};
+
+// Rotas para listar arquivos em diretórios específicos
+app.get('/user/:id/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/user/${req.params.id}`);
+  const files = listarArquivos(directoryPath);
+  res.json(files);
+});
+
+app.get('/assets/files', (req, res) => {
+  const directoryPath = path.join(__dirname, 'public/assets');
+  const files = listarArquivos(directoryPath);
+  res.json(files);
+});
+
+app.get('/novel/:id/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}`);
+  const files = listarArquivos(directoryPath);
+  res.json(files);
+});
+
+app.get('/novel/:id/assets/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}/assets`);
+  const files = listarArquivos(directoryPath);
+  res.json(files);
 });
 
 // Função para servir imagens ou arquivos
