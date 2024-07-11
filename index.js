@@ -129,17 +129,23 @@ const listarArquivos = (directory) => {
   if (!fs.existsSync(directory)) {
     return [];
   }
+  
   return fs.readdirSync(directory).map(file => {
     const filePath = path.join(directory, file);
     const stats = fs.statSync(filePath);
+    const fileExtension = path.extname(file);
+    const fileName = path.basename(file, fileExtension);
+    
     return {
-      name: file,
-      size: stats.size,
-      created: stats.birthtime,
-      modified: stats.mtime
+      name: fileName,       // Nome do arquivo sem a extensão
+      archive: file,        // Nome completo do arquivo com a extensão
+      size: stats.size,     // Tamanho do arquivo
+      created: stats.birthtime, // Data de criação
+      modified: stats.mtime // Data de modificação
     };
   });
 };
+
 
 app.get('/user/:id/files', (req, res) => {
   const directoryPath = path.join(__dirname, `public/user/${req.params.id}`);
