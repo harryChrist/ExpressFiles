@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sizeOf = require('image-size');
 const helmet = require('helmet');
 const compression = require('compression');
 const { body, validationResult } = require('express-validator');
@@ -125,6 +126,44 @@ app.post('/upload',
   }
 );
 
+// Rota para remover arquivos
+app.delete('/remove', (req, res) => {
+  const { name, type, id } = req.body;
+
+  // Verificação do campo "tipo"
+  if (!type) {
+    return res.status(400).json({ error: 'O campo "tipo" é obrigatório.' });
+  }
+
+  // Verificação do campo "name"
+  if (!name) {
+    return res.status(400).json({ error: 'O campo "name" é obrigatório.' });
+  }
+
+  let finalDir;
+  try {
+    finalDir = path.join(__dirname, obterDiretorioDestino(type, id));
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  let fileFound = false;
+
+  for (const ext of possibleExtensions) {
+    const filePath = path.join(finalDir, `${name}${ext}`);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath); // Remove o arquivo
+      fileFound = true;
+    }
+  }
+
+  if (!fileFound) {
+    return res.status(404).json({ error: 'Arquivo não encontrado.' });
+  }
+
+  res.json({ message: 'Arquivo removido com sucesso.' });
+});
+
 const listarArquivos = (directory) => {
   if (!fs.existsSync(directory)) {
     return [];
@@ -135,11 +174,23 @@ const listarArquivos = (directory) => {
     const stats = fs.statSync(filePath);
     const fileExtension = path.extname(file);
     const fileName = path.basename(file, fileExtension);
+    let dimensions = {};
+
+    // Verificar se o arquivo é uma imagem para obter suas dimensões
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(fileExtension.toLowerCase())) {
+      try {
+        dimensions = sizeOf(filePath);
+      } catch (err) {
+        console.error(`Erro ao obter dimensões da imagem: ${filePath}`, err);
+      }
+    }
     
     return {
       name: fileName,       // Nome do arquivo sem a extensão
       archive: file,        // Nome completo do arquivo com a extensão
       size: stats.size,     // Tamanho do arquivo
+      width: dimensions.width, // Largura da imagem
+      height: dimensions.height, // Altura da imagem
       created: stats.birthtime, // Data de criação
       modified: stats.mtime // Data de modificação
     };
@@ -181,6 +232,10 @@ const servirArquivos = (directory, req, res) => {
   }
   res.status(404).send('Arquivo não encontrado');
 };
+
+/*app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});*/
 
 app.get('/image/:name', (req, res) => {
   const directoryPath = path.join(__dirname, 'public/image');
