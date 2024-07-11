@@ -99,14 +99,14 @@ const obterDiretorioDestino = (tipo, id) => {
 app.post('/upload', 
   upload.single('imagem'), 
   body('name').notEmpty().withMessage('O campo "name" é obrigatório.'),
-  body('tipo').notEmpty().withMessage('O campo "tipo" é obrigatório.'),
+  body('type').notEmpty().withMessage('O campo "type" é obrigatório.'),
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, tipo, id } = req.body;
+    const { name, type, id } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ error: 'O campo "imagem" é obrigatório.' });
@@ -114,7 +114,7 @@ app.post('/upload',
 
     let finalDir;
     try {
-      finalDir = path.join(__dirname, obterDiretorioDestino(tipo, id));
+      finalDir = path.join(__dirname, obterDiretorioDestino(type, id));
     } catch (error) {
       return res.status(400).json({ error: error.message });
     }
