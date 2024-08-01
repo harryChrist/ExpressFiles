@@ -262,7 +262,7 @@ app.get('/novel/:id/assets/:name', (req, res) => {
   servirArquivos(directoryPath, req, res);
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
