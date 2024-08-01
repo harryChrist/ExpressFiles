@@ -51,6 +51,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' https://cdn.mahoureader.com data:;");
+  next();
+});
+
 const moveFile = (tempFilePath, finalDir, name, res) => {
   const newFileExtension = path.extname(tempFilePath);
   const finalFilePath = path.join(finalDir, `${name}${newFileExtension}`);
