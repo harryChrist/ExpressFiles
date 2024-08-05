@@ -92,12 +92,12 @@ const obterDiretorioDestino = (tipo, id) => {
       return `public/user/${id}`;
     case 'assets':
       return 'public/assets';
-    case 'novel':
+    case 'series':
       if (!id) throw new Error('O campo "id" é obrigatório para o tipo "novel".');
-      return `public/novel/${id}`;
-    case 'novel-assets':
+      return `public/series/${id}`;
+    case 'series-assets':
       if (!id) throw new Error('O campo "id" é obrigatório para o tipo "novel-assets".');
-      return `public/novel/${id}/assets`;
+      return `public/series/${id}/assets`;
     default:
       throw new Error('Tipo de upload inválido.');
   }
@@ -122,6 +122,7 @@ app.post('/upload',
     let finalDir;
     try {
       finalDir = path.join(__dirname, obterDiretorioDestino(type, id));
+      console.log(finalDir)
     } catch (error) {
       return res.status(400).json({ error: error.message });
     }
@@ -216,14 +217,14 @@ app.get('/assets/files', (req, res) => {
   res.json(files);
 });
 
-app.get('/novel/:id/files', (req, res) => {
-  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}`);
+app.get('/series/:id/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/series/${req.params.id}`);
   const files = listarArquivos(directoryPath);
   res.json(files);
 });
 
-app.get('/novel/:id/assets/files', (req, res) => {
-  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}/assets`);
+app.get('/series/:id/assets/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/series/${req.params.id}/assets`);
   const files = listarArquivos(directoryPath);
   res.json(files);
 });
@@ -258,13 +259,13 @@ app.get('/assets/:name', (req, res) => {
   servirArquivos(directoryPath, req, res);
 });
 
-app.get('/novel/:id/:name', (req, res) => {
-  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}`);
+app.get('/series/:id/:name', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/series/${req.params.id}`);
   servirArquivos(directoryPath, req, res);
 });
 
-app.get('/novel/:id/assets/:name', (req, res) => {
-  const directoryPath = path.join(__dirname, `public/novel/${req.params.id}/assets`);
+app.get('/series/:id/assets/:name', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/series/${req.params.id}/assets`);
   servirArquivos(directoryPath, req, res);
 });
 
