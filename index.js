@@ -48,6 +48,20 @@ const upload = multer({
   }
 });
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // ou 'https://mahoureader.com' se quiser restringir
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin'); // opcional, mas evita bugs com embed
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp'); // se usar canvas ou WebAssembly
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src *; img-src * data: blob: 'unsafe-inline';"
+  );
+  next();
+});
+
 app.use(helmet());
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -61,13 +75,6 @@ app.use((err, req, res, next) => {
       return res.status(413).json({ error: 'Payload muito grande' });
   }
   next(err);
-});
-
-
-app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' https://cdn.mahoureader.com data:;");
-  next();
 });
 
 const moveFile = (tempFilePath, finalDir, name, res) => {
