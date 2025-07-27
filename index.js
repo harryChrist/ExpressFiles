@@ -505,13 +505,13 @@ app.get('/series/:id/chapters/:cap/:name', (req, res, next) => {
   servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/stickers/:name', (req, res, next) => {
-  const directoryPath = path.join(__dirname, 'public/stickers');
+app.get('/stickers/:id/:name', (req, res, next) => {
+  const directoryPath = path.join(__dirname, `public/stickers/${req.params.id}`);
   servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/stickers/:id/:name', (req, res, next) => {
-  const directoryPath = path.join(__dirname, `public/stickers/${req.params.id}`);
+app.get('/stickers/:name', (req, res, next) => {
+  const directoryPath = path.join(__dirname, 'public/stickers');
   servirArquivos(directoryPath, req, res, next);
 });
 
