@@ -120,6 +120,11 @@ const obterDiretorioDestino = (tipo, id) => {
     case 'series-assets':
       if (!id) throw new Error('O campo "id" é obrigatório para o tipo "novel-assets".');
       return `public/series/${id}/assets`;
+    case 'stickers':
+      if (id) {
+        return `public/stickers/${id}`;
+      }
+      return 'public/stickers';
     default:
       throw new Error('Tipo de upload inválido.');
   }
@@ -434,6 +439,18 @@ app.get('/series/:id/assets/files', (req, res) => {
   res.json(files);
 });
 
+app.get('/stickers/files', (req, res) => {
+  const directoryPath = path.join(__dirname, 'public/stickers');
+  const files = listarArquivos(directoryPath);
+  res.json(files);
+});
+
+app.get('/stickers/:id/files', (req, res) => {
+  const directoryPath = path.join(__dirname, `public/stickers/${req.params.id}`);
+  const files = listarArquivos(directoryPath);
+  res.json(files);
+});
+
 const servirArquivos = (directory, req, res, next) => {
   let name = req.params.name;
   
@@ -485,6 +502,16 @@ app.get('/series/:id/assets/:name', (req, res, next) => {
 
 app.get('/series/:id/chapters/:cap/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, `public/series/${req.params.id}/chapters/${req.params.cap}`);
+  servirArquivos(directoryPath, req, res, next);
+});
+
+app.get('/stickers/:name', (req, res, next) => {
+  const directoryPath = path.join(__dirname, 'public/stickers');
+  servirArquivos(directoryPath, req, res, next);
+});
+
+app.get('/stickers/:id/:name', (req, res, next) => {
+  const directoryPath = path.join(__dirname, `public/stickers/${req.params.id}`);
   servirArquivos(directoryPath, req, res, next);
 });
 
