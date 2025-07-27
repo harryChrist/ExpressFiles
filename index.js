@@ -88,6 +88,7 @@ app.use((err, req, res, next) => {
 const moveFile = (tempFilePath, finalDir, name, res) => {
   const newFileExtension = path.extname(tempFilePath);
   const finalFilePath = path.join(finalDir, `${name}${newFileExtension}`);
+  const fileName = `${name}${newFileExtension}`;
 
   for (const ext of possibleExtensions) {
     const oldFilePath = path.join(finalDir, `${name}${ext}`);
@@ -108,7 +109,8 @@ const moveFile = (tempFilePath, finalDir, name, res) => {
     }
     res.json({
       message: 'Upload realizado com sucesso!',
-      file: finalFilePath
+      file: fileName,
+      filePath: finalFilePath
     });
   });
 };
