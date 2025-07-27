@@ -443,7 +443,14 @@ app.get('/series/:id/assets/files', (req, res) => {
 });
 
 const servirArquivos = (directory, req, res) => {
-  const name = req.params.name;
+  let name = req.params.name;
+  
+  // Se o nome já tem extensão, extrai apenas o nome base
+  const fileExt = path.extname(name).toLowerCase();
+  if (possibleExtensions.includes(fileExt)) {
+    name = path.basename(name, fileExt);
+  }
+  
   for (const ext of possibleExtensions) {
     const filePath = path.join(directory, `${name}${ext}`);
     if (fs.existsSync(filePath)) {
