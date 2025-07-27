@@ -64,14 +64,6 @@ app.use((req, res, next) => {
 
 app.use(helmet());
 app.use(compression());
-app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  }
-}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -442,7 +434,7 @@ app.get('/series/:id/assets/files', (req, res) => {
   res.json(files);
 });
 
-const servirArquivos = (directory, req, res) => {
+const servirArquivos = (directory, req, res, next) => {
   let name = req.params.name;
   
   // Se o nome já tem extensão, extrai apenas o nome base
@@ -457,42 +449,54 @@ const servirArquivos = (directory, req, res) => {
       return res.sendFile(filePath);
     }
   }
-  res.status(404).send('Arquivo não encontrado');
+  
+  // Se não encontrou, passa para o próximo middleware (estático)
+  next();
 };
 
 /*app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });*/
 
-app.get('/image/:name', (req, res) => {
+app.get('/image/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, 'public/image');
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/user/:id/:name', (req, res) => {
+app.get('/user/:id/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, `public/user/${req.params.id}`);
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/assets/:name', (req, res) => {
+app.get('/assets/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, 'public/assets');
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/series/:id/:name', (req, res) => {
+app.get('/series/:id/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, `public/series/${req.params.id}`);
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/series/:id/assets/:name', (req, res) => {
+app.get('/series/:id/assets/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, `public/series/${req.params.id}/assets`);
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
 
-app.get('/series/:id/chapters/:cap/:name', (req, res) => {
+app.get('/series/:id/chapters/:cap/:name', (req, res, next) => {
   const directoryPath = path.join(__dirname, `public/series/${req.params.id}/chapters/${req.params.cap}`);
-  servirArquivos(directoryPath, req, res);
+  servirArquivos(directoryPath, req, res, next);
 });
+
+// Middleware estático movido para depois das rotas dinâmicas
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
