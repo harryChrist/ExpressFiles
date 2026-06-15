@@ -62,7 +62,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
+}));
 app.use(compression());
 
 app.use(express.urlencoded({ extended: true }));
@@ -343,16 +346,13 @@ app.post('/analyze-pages', async (req, res) => {
   });
 });
 
-// Rota para remover arquivos
-app.delete('/remove', (req, res) => {
+const handleRemove = (req, res) => {
   const { name, type, id } = req.body;
 
-  // Verificação do campo "tipo"
   if (!type) {
     return res.status(400).json({ error: 'O campo "tipo" é obrigatório.' });
   }
 
-  // Verificação do campo "name"
   if (!name) {
     return res.status(400).json({ error: 'O campo "name" é obrigatório.' });
   }
@@ -369,7 +369,7 @@ app.delete('/remove', (req, res) => {
   for (const ext of possibleExtensions) {
     const filePath = path.join(finalDir, `${name}${ext}`);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath); // Remove o arquivo
+      fs.unlinkSync(filePath);
       fileFound = true;
     }
   }
@@ -379,7 +379,10 @@ app.delete('/remove', (req, res) => {
   }
 
   res.json({ message: 'Arquivo removido com sucesso.' });
-});
+};
+
+app.delete('/remove', handleRemove);
+app.post('/remove', handleRemove);
 
 const listarArquivos = (directory) => {
   if (!fs.existsSync(directory)) {
